@@ -1,9 +1,9 @@
 import logging
 from aiohttp import web
-import random
 from typing import Mapping
 import config
-import models
+from models import get_model_class
+from authirisations import get_authorisation_class
 from cookies_manager import CookiesManager
 
 logging.basicConfig(level=logging.INFO)
@@ -11,15 +11,13 @@ logging.basicConfig(level=logging.INFO)
 routes = web.RouteTableDef()
 
 cookie_manager = CookiesManager(config.SECRET_KEY)
-
-
-def extend_authorise(username, password):
-    return random.choice([True, False])
+authorisation = get_authorisation_class(config.AUTHORISATION)
+headers_model = get_model_class(config.AUTHORISATION)
 
 
 def parse_headers(response_headers: Mapping):
     try:
-        return models.Radius(**response_headers)
+        return headers_model(**response_headers)
     except ValueError:
         return None
 
@@ -33,14 +31,18 @@ def is_valid_cookies(cookies: Mapping, ip, user_agent) -> bool:
     return False
 
 
-def is_valid_credentials(account: models.Account) -> bool:
-    if not account:
+def is_valid_credentials(headers: authorisation) -> bool:
+    if not headers.authorization:
         return False
-    logging.info(f'Try authorise username: {account.username}')
-    authorisation = extend_authorise(account.username, account.password)
-    if authorisation:
+    logging.info(f'Try authorise {headers}')
+    if authorisation.authorise(
+            headers.authorization.username,
+            headers.authorization.password.get_secret_value(),
+            headers.real_ip,
+            headers.realm
+    ):
         return True
-    logging.info(f'Auth failed username: {account.username}')
+    logging.info(f'Auth failed {headers}')
     return False
 
 
@@ -50,8 +52,8 @@ async def login(request: web.Request):
     if not headers:
         return web.HTTPForbidden()
     if is_valid_cookies(request.cookies, headers.real_ip, headers.user_agent):
-        return web.Response(text=f'Cookies valid', status=200)
-    if is_valid_credentials(headers.authorization):
+        return web.Response(text='Cookies valid', status=200)
+    if is_valid_credentials(headers):
         token = cookie_manager.generate_new(headers.real_ip, headers.user_agent, headers.authorization.username)
         response = web.Response(
             text='Auth success',
