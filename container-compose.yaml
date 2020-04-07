@@ -1,0 +1,14 @@
+version: "3"
+services:
+  nginx:
+    image: "nginx:alpine"
+    ports:
+      - "8000:80"
+    volumes:
+      - "./nginx_radius.conf:/etc/nginx/conf.d/default.conf:z"
+
+  auth_backend:
+    image: "nginx_auth:dev"
+    build: .
+    ports:
+      - "8010:8000"
