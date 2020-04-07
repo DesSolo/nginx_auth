@@ -6,6 +6,6 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-ADD app .
+ADD nginx_auth .
 
 CMD python server.py

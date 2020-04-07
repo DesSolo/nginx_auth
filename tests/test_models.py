@@ -26,7 +26,7 @@ valid_headers = [
 
 @pytest.mark.parametrize('headers', valid_headers)
 def test_base_valid(headers):
-    model = models.Base(**headers)
+    model = models.BaseHeader(**headers)
     assert str(model.real_ip) == headers['X-Real-IP']
     assert model.user_agent == headers['User-Agent']
     _, credentials = headers['Authorization'].split(' ')
@@ -48,24 +48,24 @@ invalid_headers = [
 @pytest.mark.parametrize('authorisation', invalid_headers)
 def test_base_invalid_authorisation(authorisation):
     with pytest.raises(ValueError):
-        models.Base(**authorisation)
+        models.BaseHeader(**authorisation)
 
 
 def test_base_empty_authorisation():
     headers = {'X-Real-IP': '127.0.0.1', 'User-Agent': 'curl'}
-    model = models.Base(**headers)
+    model = models.BaseHeader(**headers)
     assert model.authorization is None
 
 
 def test_radius_valid():
     headers = {'User-Agent': 'curl', 'X-Radius-Realm': 'test_realm'}
-    model = models.Radius(**headers)
+    model = models.RadiusHeader(**headers)
     assert model.realm == 'test_realm'
 
 
 def test_radius_default():
     headers = {'User-Agent': 'curl'}
-    model = models.Radius(**headers)
+    model = models.RadiusHeader(**headers)
     assert model.realm == 'Restricted area'
     assert model.real_ip == '127.0.0.1'
 
@@ -79,7 +79,7 @@ ldap_valid_headers = [
 
 @pytest.mark.parametrize('header', ldap_valid_headers)
 def test_ldap_valid(header):
-    model = models.Ldap(**header)
+    model = models.LdapHeader(**header)
     assert model.realm == header.get('X-Ldap-Realm', model.realm)
     assert model.base_dn == header['X-Ldap-BaseDN']
     assert model.template == header.get('X-Ldap-Template', model.template)

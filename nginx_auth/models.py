@@ -6,14 +6,9 @@ from typing import Optional
 _models_classes = {}
 
 
-def register_model(name=None):
-    def wrapper(cls):
-        if name:
-            _models_classes[name] = cls
-            return
-        _models_classes[cls.__name__.replace('Header', '')] = cls
-
-    return wrapper
+def register_model(cls):
+    _models_classes[cls.__name__.replace('Header', '')] = cls
+    return cls
 
 
 class Account(BaseModel):
@@ -35,16 +30,16 @@ class BaseHeader(BaseModel):
         return Account(username=username, password=password)
 
 
-def get_model_class(name: str) -> BaseHeader:
+def get_model_class(name: str):
     return _models_classes[name]
 
 
-@register_model()
+@register_model
 class RadiusHeader(BaseHeader):
     realm: str = Field('Restricted area', alias='X-Radius-Realm')
 
 
-@register_model()
+@register_model
 class LdapHeader(BaseHeader):
     realm: str = Field('Restricted area', alias='X-Ldap-Realm')
     base_dn: str = Field(..., alias='X-Ldap-BaseDN')
