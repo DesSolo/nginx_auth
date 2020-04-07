@@ -18,13 +18,16 @@ class Base(BaseModel):
     def validate_authorisation(cls, v):
         if not v:
             return v
-        try:
-            _, credentials = v.split(' ')
-            username, password = b64decode(credentials).decode('utf-8').split(':', 1)
-            return Account(username=username, password=password)
-        except Exception as ex:
-            return None
+        _, credentials = v.split(' ')
+        username, password = b64decode(credentials).decode('utf-8').split(':', 1)
+        return Account(username=username, password=password)
 
 
 class Radius(Base):
     realm: str = Field('Restricted area', alias='X-Radius-Realm')
+
+
+class Ldap(Base):
+    realm: str = Field('Restricted area', alias='X-Ldap-Realm')
+    base_dn: str = Field(..., alias='X-Ldap-BaseDN')
+    template: str = Field('(sAMAccountName=%(username)s)', alias='X-Ldap-Template')
