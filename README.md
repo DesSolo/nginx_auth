@@ -1,4 +1,4 @@
-#nginx_auth
+# nginx_auth
 Python backend based service for proxy_pass authorisation requests
 
 ### Run service
